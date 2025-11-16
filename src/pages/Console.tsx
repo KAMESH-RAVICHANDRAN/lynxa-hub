@@ -1,237 +1,333 @@
-import { useState } from "react";
-import Navigation from "@/components/Navigation";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Play, Copy, Trash2, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Bot, User, Zap, Brain, Copy, Check, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { ApiClient } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
-  role: "user" | "assistant";
+  id: string;
+  role: 'user' | 'assistant';
   content: string;
+  timestamp: Date;
 }
 
-const Console = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "user", content: "Hello Lynxa Pro! Introduce yourself." }
-  ]);
-  const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("lynxa-pro");
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState("");
+const ApiKeyModal: React.FC<{ onApiKeySubmit: (key: string) => void }> = ({ onApiKeySubmit }) => {
+  const [apiKey, setApiKey] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRun = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please enter your API key to test the API",
-        variant: "destructive"
-      });
-      return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!apiKey.trim()) return;
+    
+    setIsLoading(true);
+    const success = await onApiKeySubmit(apiKey);
+    setIsLoading(false);
+    
+    if (!success) {
+      setApiKey('');
     }
-
-    setLoading(true);
-    setResponse("");
-
-    try {
-      const res = await fetch('https://lynxa-pro-backend.vercel.app/api/lynxa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: messages
-        })
-      });
-
-      const data = await res.json();
-      
-      if (res.ok) {
-        setResponse(JSON.stringify(data, null, 2));
-        toast({
-          title: "Success",
-          description: "API call completed successfully"
-        });
-      } else {
-        setResponse(JSON.stringify(data, null, 2));
-        toast({
-          title: "Error",
-          description: data.error || "API call failed",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to call API";
-      setResponse(JSON.stringify({ error: errorMessage }, null, 2));
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCopyResponse = () => {
-    navigator.clipboard.writeText(response);
-    toast({
-      title: "Copied",
-      description: "Response copied to clipboard"
-    });
-  };
-
-  const handleClearMessages = () => {
-    setMessages([{ role: "user", content: "" }]);
-    setResponse("");
-  };
-
-  const updateMessage = (index: number, content: string) => {
-    const newMessages = [...messages];
-    newMessages[index].content = content;
-    setMessages(newMessages);
-  };
-
-  const addMessage = () => {
-    setMessages([...messages, { role: "user", content: "" }]);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">API Console</h1>
-          <p className="text-muted-foreground text-lg">
-            Test and debug your Lynxa Pro API calls in real-time
-          </p>
-        </div>
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md grok-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            Connect to Nexariq AI
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">API Key</label>
+              <Input
+                type="password"
+                placeholder="Enter your Lynxa Pro API key..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="grok-border"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Get your API key from the Lynxa Pro Backend dashboard
+              </p>
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isLoading || !apiKey.trim()}
+            >
+              {isLoading ? 'Connecting...' : 'Connect'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Request Panel */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <h2 className="text-xl font-semibold mb-4">Configuration</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="apiKey">API Key</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    placeholder="nxq_..."
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    className="bg-secondary border-border"
-                  />
-                </div>
+const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-                <div>
-                  <Label htmlFor="model">Model</Label>
-                  <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger className="bg-secondary border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lynxa-pro">lynxa-pro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Messages</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearMessages}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div key={index}>
-                    <Label>Message {index + 1} ({message.role})</Label>
-                    <Textarea
-                      value={message.content}
-                      onChange={(e) => updateMessage(index, e.target.value)}
-                      placeholder="Enter your message..."
-                      className="bg-secondary border-border min-h-[100px] font-mono text-sm"
-                    />
-                  </div>
-                ))}
-                
-                <Button
-                  variant="outline"
-                  onClick={addMessage}
-                  className="w-full"
-                >
-                  Add Message
-                </Button>
-              </div>
-
-              <div className="mt-6">
-                <Button
-                  onClick={handleRun}
-                  disabled={loading}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Running...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-2 h-4 w-4" />
-                      Run API Call
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Card>
+  return (
+    <div className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+        message.role === 'user' 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+      }`}>
+        {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+      </div>
+      <div className={`flex-1 max-w-3xl ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+        <div className={`inline-block p-4 rounded-2xl ${
+          message.role === 'user'
+            ? 'bg-primary text-primary-foreground ml-12'
+            : 'bg-card border grok-border mr-12'
+        }`}>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed">
+            {message.content}
           </div>
+          {message.role === 'assistant' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 h-6 px-2 text-xs opacity-60 hover:opacity-100"
+              onClick={copyToClipboard}
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          {message.timestamp.toLocaleTimeString()}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-          {/* Response Panel */}
-          <div>
-            <Card className="p-6 bg-gradient-card border-border shadow-card sticky top-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Response</h2>
-                {response && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyResponse}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </Button>
-                )}
+const Console: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, apiKey, login } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: 'Hello! I\'m Nexariq AI, your advanced AI assistant powered by Grok-level intelligence. How can I help you today?',
+      timestamp: new Date()
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleApiKeySubmit = async (key: string): Promise<boolean> => {
+    return await login(key);
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading || !apiKey) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const apiClient = new ApiClient(apiKey);
+      const response = await apiClient.sendMessage(input.trim());
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.response || response.message || 'I received your message but couldn\'t generate a proper response. Please try again.',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '⚠️ Sorry, I encountered an error processing your request. Please check your connection and try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: 'Connection Error',
+        description: 'Failed to send message to Nexariq AI',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    
+    // Auto-resize textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: '1',
+      role: 'assistant',
+      content: 'Chat cleared! How can I help you today?',
+      timestamp: new Date()
+    }]);
+  };
+
+  if (!user || !apiKey) {
+    return <ApiKeyModal onApiKeySubmit={handleApiKeySubmit} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Brain className="w-5 h-5 text-white" />
               </div>
-              
-              {response ? (
-                <div className="bg-secondary rounded-lg p-4 border border-border overflow-auto max-h-[600px]">
-                  <pre className="text-sm font-mono whitespace-pre-wrap">
-                    <code className="text-foreground">{response}</code>
-                  </pre>
+              <div>
+                <h1 className="text-lg font-semibold grok-text-gradient">Nexariq AI Console</h1>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    <Zap className="w-3 h-3 mr-1" />
+                    Connected
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Grok-level Intelligence
+                  </Badge>
                 </div>
-              ) : (
-                <div className="bg-secondary rounded-lg p-8 border border-border border-dashed flex items-center justify-center text-muted-foreground">
-                  Response will appear here after running the API call
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/')}
+                className="grok-border"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={clearChat}
+                className="grok-border"
+              >
+                Clear Chat
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+              >
+                Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Area */}
+      <div className="max-w-4xl mx-auto px-4 pb-32">
+        <div className="space-y-6 py-6">
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          {isLoading && (
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="inline-block p-4 rounded-2xl bg-card border grok-border">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
                 </div>
-              )}
-            </Card>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                placeholder="Message Nexariq AI... (Enter to send, Shift+Enter for new line)"
+                className="min-h-12 max-h-32 resize-none grok-border"
+                rows={1}
+              />
+            </div>
+            <Button
+              onClick={sendMessage}
+              disabled={isLoading || !input.trim()}
+              className="bg-primary hover:bg-primary/90 p-3"
+              size="sm"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground mt-2 text-center">
+            Powered by Lynxa Pro Backend • Grok-level Intelligence
           </div>
         </div>
       </div>

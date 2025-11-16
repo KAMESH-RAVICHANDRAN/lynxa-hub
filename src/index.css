@@ -2,6 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --background: 220 13% 9%;
+    --foreground: 220 9% 95%;
+    --card: 220 13% 10%;
+    --card-foreground: 220 9% 95%;
+    --popover: 220 13% 9%;
+    --popover-foreground: 220 9% 95%;
+    --primary: 220 90% 56%;
+    --primary-foreground: 220 9% 9%;
+    --secondary: 220 7% 18%;
+    --secondary-foreground: 220 9% 95%;
+    --muted: 220 7% 18%;
+    --muted-foreground: 220 5% 64%;
+    --accent: 220 7% 18%;
+    --accent-foreground: 220 9% 95%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 220 9% 95%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 220 90% 56%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .grok-gradient {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  }
+  
+  .grok-text-gradient {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .grok-border {
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+  
+  .grok-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .grok-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
+  }
+  
+  .typing-animation {
+    overflow: hidden;
+    border-right: 2px solid #3b82f6;
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+  }
+  
+  @keyframes typing {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  
+  @keyframes blink-caret {
+    from, to {
+      border-color: transparent;
+    }
+    50% {
+      border-color: #3b82f6;
+    }
+  }
+  
+  .aurora-bg {
+    background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%),
+                radial-gradient(ellipse at 20% 80%, rgba(147, 51, 234, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
