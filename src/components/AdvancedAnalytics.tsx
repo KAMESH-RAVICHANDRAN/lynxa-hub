@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSafeUser } from '@/lib/stack-auth-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
