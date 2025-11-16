@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Key, Sparkles, Zap, CheckCircle, AlertCircle, Mail, User, Building2, Crown, Rocket, Shield } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ApiKeyGeneratorProps {
   isOpen: boolean;
@@ -15,11 +16,12 @@ interface ApiKeyGeneratorProps {
 }
 
 export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpenChange }) => {
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [organization, setOrganization] = useState('');
+  const { user, generateApiKey: generateUserApiKey } = useAuth();
+  const [firstName, setFirstName] = useState(user?.first_name || '');
+  const [lastName, setLastName] = useState(user?.last_name || '');
+  const [organization, setOrganization] = useState(user?.organization || '');
   const [selectedTier, setSelectedTier] = useState('free');
+  const [keyName, setKeyName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedKey, setGeneratedKey] = useState('');
   const [step, setStep] = useState(1);
@@ -27,42 +29,54 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
   const tiers = [
     {
       id: 'free',
-      name: 'Starter',
+      name: 'Developer',
       icon: Zap,
       price: 'Free',
-      limits: '1K requests/month',
-      features: ['Basic AI Chat', 'Standard Models', 'Community Support'],
+      limits: '10K tokens/month',
+      features: ['Grok Basic Models', 'Standard Rate Limits', 'Community Support', 'Basic Analytics'],
       color: 'bg-blue-500/10 border-blue-500/30 text-blue-300',
-      gradient: 'from-blue-500/20 to-cyan-500/20'
+      gradient: 'from-blue-500/20 to-cyan-500/20',
+      available: true
     },
     {
       id: 'pro',
       name: 'Professional',
       icon: Crown,
-      price: '$29/month',
-      limits: '100K requests/month',
-      features: ['Advanced AI Models', 'Priority Support', 'Analytics Dashboard', 'API Webhooks'],
+      price: '$49/month (Coming Soon)',
+      limits: '1M tokens/month',
+      features: ['Grok Advanced Models', 'Priority Processing', 'Advanced Analytics', 'API Webhooks', 'Custom Rate Limits', '✨ Demo Available'],
       color: 'bg-purple-500/10 border-purple-500/30 text-purple-300',
       gradient: 'from-purple-500/20 to-pink-500/20',
-      popular: true
+      popular: true,
+      available: true
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
       icon: Shield,
-      price: 'Custom',
-      limits: 'Unlimited requests',
-      features: ['Dedicated Infrastructure', '24/7 Support', 'Custom Models', 'SLA Guarantee', 'White-label Options'],
+      price: '$299/month (Coming Soon)',
+      limits: 'Unlimited tokens',
+      features: ['Grok Enterprise Models', 'Dedicated Infrastructure', '24/7 Priority Support', 'Custom Fine-tuning', 'SLA Guarantee', 'White-label API', '✨ Demo Available'],
       color: 'bg-orange-500/10 border-orange-500/30 text-orange-300',
-      gradient: 'from-orange-500/20 to-red-500/20'
+      gradient: 'from-orange-500/20 to-red-500/20',
+      available: true
     }
   ];
 
   const generateApiKey = async () => {
-    if (!email.trim()) {
+    if (!user?.email) {
       toast({
-        title: 'Email Required',
-        description: 'Please enter your email address to generate an API key.',
+        title: 'Authentication Required',
+        description: 'Please ensure you are logged in to generate an API key.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!keyName.trim()) {
+      toast({
+        title: 'Key Name Required',
+        description: 'Please provide a name for your API key.',
         variant: 'destructive'
       });
       return;
@@ -71,31 +85,29 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
     setIsGenerating(true);
 
     try {
-      const response = await fetch('https://lynxa-pro-backend.vercel.app/api/generate-key', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          first_name: firstName.trim() || undefined,
-          last_name: lastName.trim() || undefined,
-          organization: organization.trim() || undefined,
-          tier: selectedTier
-        })
-      });
+      const selectedPlan = tiers.find(t => t.id === selectedTier);
+      
+      // For paid plans, show upgrade message but allow generation for demo
+      if (selectedTier !== 'free') {
+        toast({
+          title: '🎆 Premium Plan Selected',
+          description: `Generating ${selectedPlan?.name} API key. Payment integration coming soon!`,
+        });
+      }
 
-      const data = await response.json();
+      // Generate API key for all tiers (demo mode)
+      const finalKeyName = keyName.trim() || `${selectedPlan?.name} Key - ${new Date().toLocaleDateString()}`;
+      const newKey = await generateUserApiKey(finalKeyName, user.email, selectedTier);
 
-      if (response.ok && data.api_key) {
-        setGeneratedKey(data.api_key);
+      if (newKey) {
+        setGeneratedKey(newKey);
         setStep(3);
         toast({
           title: '🎉 API Key Generated!',
-          description: 'Your Nexariq API key has been created successfully.',
+          description: `Your ${selectedPlan?.name} API key has been created successfully.`,
         });
       } else {
-        throw new Error(data.error || 'Failed to generate API key');
+        throw new Error('Failed to generate API key');
       }
     } catch (error) {
       console.error('API key generation failed:', error);
@@ -178,20 +190,32 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="email" className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email Address *
+                    <Label htmlFor="keyName" className="flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      API Key Name *
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="your.email@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="keyName"
+                      placeholder="e.g., Production API, Development Key"
+                      value={keyName}
+                      onChange={(e) => setKeyName(e.target.value)}
                       className="grok-border"
                       required
                     />
                   </div>
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Account Email
+                    </Label>
+                    <Input
+                      value={user?.email || 'Not authenticated'}
+                      disabled
+                      className="grok-border bg-secondary/50"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="organization">
                       <Building2 className="w-4 h-4 inline mr-2" />
@@ -204,6 +228,12 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
                       onChange={(e) => setOrganization(e.target.value)}
                       className="grok-border"
                     />
+                  </div>
+                  <div>
+                    <Label>Current Plan</Label>
+                    <div className="p-3 bg-secondary/50 rounded-lg border grok-border">
+                      <span className="text-sm font-medium">{user?.plan || 'Free'}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -234,7 +264,7 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
             <div className="flex justify-end">
               <Button 
                 onClick={() => setStep(2)}
-                disabled={!email.trim()}
+                disabled={!keyName.trim() || !user?.email}
                 className="grok-hover"
               >
                 Continue to Plan Selection
@@ -270,6 +300,13 @@ export const ApiKeyGenerator: React.FC<ApiKeyGeneratorProps> = ({ isOpen, onOpen
                         <Badge className="bg-primary text-primary-foreground px-3 py-1">
                           <Sparkles className="w-3 h-3 mr-1" />
                           Most Popular
+                        </Badge>
+                      </div>
+                    )}
+                    {tier.id !== 'free' && (
+                      <div className="absolute -top-3 right-4">
+                        <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 px-2 py-1 text-xs">
+                          Demo Available
                         </Badge>
                       </div>
                     )}

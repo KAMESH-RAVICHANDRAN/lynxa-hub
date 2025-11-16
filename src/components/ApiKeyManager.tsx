@@ -45,8 +45,7 @@ interface UsageStats {
 }
 
 export const ApiKeyManager: React.FC = () => {
-  const { apiKey } = useAuth();
-  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const { apiKey, user, userApiKeys, generateApiKey, revokeApiKey: revokeKey, getUserApiKeys } = useAuth();
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showNewKeyDialog, setShowNewKeyDialog] = useState(false);
@@ -55,34 +54,15 @@ export const ApiKeyManager: React.FC = () => {
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadApiKeys();
+    getUserApiKeys();
     loadUsageStats();
   }, []);
 
-  const loadApiKeys = async () => {
-    try {
-      const response = await fetch('https://lynxa-pro-backend.vercel.app/api/user/keys', {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  useEffect(() => {
+    setIsLoading(false);
+  }, [userApiKeys]);
 
-      if (response.ok) {
-        const data = await response.json();
-        setKeys(data.keys || []);
-      }
-    } catch (error) {
-      console.error('Failed to load API keys:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load API keys',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   const loadUsageStats = async () => {
     try {
@@ -112,41 +92,26 @@ export const ApiKeyManager: React.FC = () => {
       return;
     }
 
+    if (!user?.email) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to generate API keys',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      const response = await fetch('https://lynxa-pro-backend.vercel.app/api/generate-key', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newKeyName.trim(),
-          email: 'user@nexariq.com' // This should come from user context
-        })
-      });
+      const newKey = await generateApiKey(newKeyName.trim(), user.email);
 
-      const data = await response.json();
-
-      if (response.ok && data.api_key) {
-        toast({
-          title: '🎉 API Key Generated!',
-          description: 'Your new API key has been created successfully.',
-        });
-        
+      if (newKey) {
         setNewKeyName('');
         setShowNewKeyDialog(false);
-        loadApiKeys(); // Refresh the list
-      } else {
-        throw new Error(data.error || 'Failed to generate API key');
       }
     } catch (error) {
       console.error('API key generation failed:', error);
-      toast({
-        title: 'Generation Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate API key',
-        variant: 'destructive'
-      });
     } finally {
       setIsGenerating(false);
     }
@@ -170,32 +135,8 @@ export const ApiKeyManager: React.FC = () => {
     setVisibleKeys(newVisibleKeys);
   };
 
-  const revokeKey = async (keyId: string) => {
-    try {
-      const response = await fetch(`https://lynxa-pro-backend.vercel.app/api/revoke-key`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ key_id: keyId })
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Key Revoked',
-          description: 'API key has been revoked successfully',
-        });
-        loadApiKeys(); // Refresh the list
-      }
-    } catch (error) {
-      console.error('Failed to revoke key:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to revoke API key',
-        variant: 'destructive'
-      });
-    }
+  const handleRevokeKey = async (keyId: string) => {
+    await revokeKey(keyId);
   };
 
   const formatDate = (dateString: string) => {
@@ -333,7 +274,7 @@ export const ApiKeyManager: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {keys.length === 0 ? (
+          {userApiKeys.length === 0 ? (
             <div className="text-center py-8">
               <Key className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No API Keys Yet</h3>
@@ -347,7 +288,7 @@ export const ApiKeyManager: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {keys.map((key) => (
+              {userApiKeys.map((key) => (
                 <div 
                   key={key.id}
                   className="flex items-center justify-between p-4 border grok-border rounded-lg bg-secondary/30"
@@ -409,7 +350,7 @@ export const ApiKeyManager: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => revokeKey(key.id)}
+                      onClick={() => handleRevokeKey(key.id)}
                       className="text-red-400 hover:text-red-300 hover:border-red-400"
                     >
                       <Trash2 className="w-3 h-3" />

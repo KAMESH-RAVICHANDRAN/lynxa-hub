@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApiKeyManager } from '@/components/ApiKeyManager';
 import { ApiKeyGenerator } from '@/components/ApiKeyGenerator';
+import { UserProfile } from '@/components/UserProfile';
+import { BillingDashboard } from '@/components/BillingDashboard';
+import { AdvancedAnalytics } from '@/components/AdvancedAnalytics';
 import { 
   Brain, 
   TrendingUp, 
@@ -230,6 +233,7 @@ const Dashboard = () => {
           <TabsList className="bg-secondary/50 grok-border">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -337,53 +341,16 @@ const Dashboard = () => {
             <ApiKeyManager />
           </TabsContent>
 
+          <TabsContent value="billing">
+            <BillingDashboard />
+          </TabsContent>
+
           <TabsContent value="analytics">
-            <Card className="grok-border bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Usage Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Analytics Dashboard</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Detailed usage metrics and performance insights coming soon
-                  </p>
-                  <Badge variant="outline">Coming Soon</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <AdvancedAnalytics />
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card className="grok-border bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium mb-2">Profile Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-muted-foreground">Email</label>
-                        <p className="text-sm font-medium">{user?.email || 'user@nexariq.com'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-muted-foreground">Plan</label>
-                        <p className="text-sm font-medium">Free Tier</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-border">
-                    <Button variant="outline" onClick={logout} className="grok-border">
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <UserProfile />
           </TabsContent>
         </Tabs>
       </div>
