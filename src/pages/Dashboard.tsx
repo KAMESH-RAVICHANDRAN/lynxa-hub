@@ -9,6 +9,7 @@ import { ApiKeyGenerator } from '@/components/ApiKeyGenerator';
 import { UserProfile } from '@/components/UserProfile';
 import { BillingDashboard } from '@/components/BillingDashboard';
 import { AdvancedAnalytics } from '@/components/AdvancedAnalytics';
+import { APIPlayground } from '@/components/APIPlayground';
 import { 
   Brain, 
   TrendingUp, 
@@ -45,10 +46,10 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      title: 'Start Chatting',
-      description: 'Open Nexariq Console',
+      title: 'API Playground',
+      description: 'Test API in real-time',
       icon: MessageSquare,
-      action: () => navigate('/console'),
+      action: () => document.querySelector('[data-state="inactive"][value="playground"]')?.click(),
       color: 'bg-blue-500',
       featured: true
     },
@@ -60,17 +61,17 @@ const Dashboard = () => {
       color: 'bg-purple-500'
     },
     {
-      title: 'View Documentation',
-      description: 'API reference & guides',
-      icon: FileText,
-      action: () => navigate('/docs'),
+      title: 'View Analytics',
+      description: 'Usage insights & metrics',
+      icon: BarChart3,
+      action: () => document.querySelector('[data-state="inactive"][value="analytics"]')?.click(),
       color: 'bg-green-500'
     },
     {
-      title: 'Monitor Usage',
-      description: 'Analytics dashboard',
-      icon: BarChart3,
-      action: () => {},
+      title: 'Manage Billing',
+      description: 'Plans & subscriptions',
+      icon: TrendingUp,
+      action: () => document.querySelector('[data-state="inactive"][value="billing"]')?.click(),
       color: 'bg-orange-500'
     }
   ];
@@ -233,6 +234,7 @@ const Dashboard = () => {
           <TabsList className="bg-secondary/50 grok-border">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="playground">Playground</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -339,6 +341,10 @@ const Dashboard = () => {
 
           <TabsContent value="api-keys">
             <ApiKeyManager />
+          </TabsContent>
+
+          <TabsContent value="playground">
+            <APIPlayground />
           </TabsContent>
 
           <TabsContent value="billing">

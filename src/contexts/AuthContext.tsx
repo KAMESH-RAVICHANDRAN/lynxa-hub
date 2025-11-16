@@ -86,7 +86,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_BASE_URL = 'https://lynxa-pro-backend.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'https://lynxa-pro-backend.vercel.app';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -360,24 +360,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const generateApiKey = async (name: string, email: string, planType?: string): Promise<string | null> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/generate-key`, {
+      const response = await fetch(`${API_BASE_URL}/api/keys/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: name,
           email: email,
-          first_name: user?.first_name,
-          last_name: user?.last_name,
-          organization: user?.organization,
-          plan_type: planType || 'free'
+          userId: user?.id,
+          keyName: name,
+          planType: planType || 'free'
         })
       });
 
       const data = await response.json();
 
-      if (response.ok && data.apiKey) {
+      if (response.ok && data.success && data.apiKey) {
         // Refresh the user's API keys list
         await getUserApiKeys();
         
