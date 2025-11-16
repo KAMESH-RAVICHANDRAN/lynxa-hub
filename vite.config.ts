@@ -16,4 +16,19 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom"],
   },
+  define: {
+    // Ensure environment variables are properly available in build
+    'process.env.NODE_ENV': JSON.stringify(mode),
+  },
+  optimizeDeps: {
+    include: ["@stackframe/stack"],
+  },
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
+  },
 }));

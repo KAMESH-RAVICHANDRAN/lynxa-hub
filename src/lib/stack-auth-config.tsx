@@ -1,18 +1,26 @@
-import { StackProvider } from "@stackframe/stack";
+import { StackProvider, StackClientApp } from "@stackframe/stack";
 
-// Stack Auth configuration with AJ prefix support
+// Stack Auth configuration with AJ prefix support for Vite
 export const stackConfig = {
-  projectId: process.env.NEXT_PUBLIC_AJ_STACK_PROJECT_ID || process.env.NEXT_PUBLIC_STACK_PROJECT_ID!,
-  publishableClientKey: process.env.NEXT_PUBLIC_AJ_STACK_PUBLISHABLE_CLIENT_KEY || process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
+  projectId: import.meta.env.VITE_AJ_STACK_PROJECT_ID || "6fcf93f3-7583-41c9-b0ee-9d92afc0a76c",
+  publishableClientKey: import.meta.env.VITE_AJ_STACK_PUBLISHABLE_CLIENT_KEY || "pck_fm0x26a0xsr9bj24vymkhjr1k81a36rqcz7efvh9x981g",
 };
+
+console.log('🔐 Stack Auth Config:', {
+  projectId: stackConfig.projectId,
+  hasPublishableKey: !!stackConfig.publishableClientKey
+});
+
+// Initialize Stack Client App
+export const stackApp = new StackClientApp({
+  projectId: stackConfig.projectId,
+  publishableClientKey: stackConfig.publishableClientKey,
+});
 
 // Stack Auth provider wrapper component  
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
-    <StackProvider 
-      projectId={stackConfig.projectId}
-      publishableClientKey={stackConfig.publishableClientKey}
-    >
+    <StackProvider app={stackApp}>
       {children}
     </StackProvider>
   );
