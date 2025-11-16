@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider as LegacyAuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider as StackAuthProvider } from "./lib/stack-auth-config";
+import { useStackApp, useUser } from "@stackframe/stack";
 import { LoginForm } from "./components/LoginForm";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -121,9 +123,19 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Protected route wrapper
+// Protected route wrapper with Stack Auth integration
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const user = useUser();
+  const { isAuthenticated: legacyAuth, isLoading: legacyLoading } = useAuth();
+  
+  // Check both Stack Auth and legacy auth for backward compatibility
+  const isStackAuthenticated = !!user;
+  
+  // Combined loading state - for now use legacy loading state
+  const isLoading = legacyLoading;
+  
+  // Combined authentication state (Stack Auth takes priority)
+  const isAuthenticated = isStackAuthenticated || legacyAuth;
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -200,11 +212,13 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
+      <StackAuthProvider>
+        <BrowserRouter>
+          <LegacyAuthProvider>
+            <AppRoutes />
+          </LegacyAuthProvider>
+        </BrowserRouter>
+      </StackAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
