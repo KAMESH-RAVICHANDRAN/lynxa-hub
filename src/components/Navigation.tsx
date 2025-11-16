@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Code2, BookOpen, LayoutDashboard, Menu } from "lucide-react";
+import { Code2, BookOpen, LayoutDashboard, Menu, Terminal } from "lucide-react";
 import { useState } from "react";
 
 const Navigation = () => {
@@ -21,6 +21,12 @@ const Navigation = () => {
               <Link to="/docs">
                 <BookOpen className="mr-2 h-4 w-4" />
                 Documentation
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/console">
+                <Terminal className="mr-2 h-4 w-4" />
+                Console
               </Link>
             </Button>
             <Button variant="ghost" asChild>
@@ -58,6 +64,12 @@ const Navigation = () => {
               <Link to="/docs">
                 <BookOpen className="mr-2 h-4 w-4" />
                 Documentation
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild className="w-full justify-start">
+              <Link to="/console">
+                <Terminal className="mr-2 h-4 w-4" />
+                Console
               </Link>
             </Button>
             <Button variant="ghost" asChild className="w-full justify-start">

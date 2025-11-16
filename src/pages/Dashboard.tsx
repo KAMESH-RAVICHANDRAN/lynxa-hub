@@ -1,9 +1,12 @@
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Key, BarChart3, FileCode, Settings, Copy } from "lucide-react";
+import ApiKeyModal from "@/components/ApiKeyModal";
 
 const Dashboard = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -51,7 +54,10 @@ const Dashboard = () => {
             <Card className="p-6 bg-gradient-card border-border shadow-card">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">API Keys</h2>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
                   <Key className="mr-2 h-4 w-4" />
                   Create New Key
                 </Button>
@@ -145,6 +151,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      <ApiKeyModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
   );
 };
