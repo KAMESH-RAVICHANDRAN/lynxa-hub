@@ -66,20 +66,28 @@ const Documentation = () => {
         {/* Hero Section */}
         <div className="text-center mb-12 aurora-bg rounded-2xl p-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="grok-text-gradient">Nexariq AI API</span>
+            <span className="grok-text-gradient">Lynxa Pro API</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-            The most advanced AI API with Grok-level intelligence. Build the future of AI applications 
-            with our enterprise-grade platform.
+            Complete Lynxa AI Platform - Generate API keys, chat with Grok-level intelligence, 
+            and integrate advanced AI into your applications. This is your one-stop platform for all Lynxa AI services.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg"
-              onClick={() => navigate('/console')}
+              onClick={() => navigate('/dashboard')}
               className="bg-primary hover:bg-primary/90 grok-hover"
             >
+              <Key className="w-4 h-4 mr-2" />
+              Get Your API Key
+            </Button>
+            <Button 
+              size="lg"
+              onClick={() => navigate('/console')}
+              className="bg-green-600 hover:bg-green-700 grok-hover"
+            >
               <Zap className="w-4 h-4 mr-2" />
-              Get Started
+              Try Console
             </Button>
             <Button 
               size="lg" 

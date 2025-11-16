@@ -1,80 +1,128 @@
-import React, { useState, useEffect } from "react";
-import { Brain, TrendingUp, Zap, Users, Clock, Activity, Copy, Check, Home, LogOut } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { ApiClient } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-
-interface AnalyticsData {
-  total_requests: number;
-  total_tokens: number;
-  avg_response_time: number;
-  error_rate: number;
-  cost_estimate: number;
-  daily_usage: Array<{
-    date: string;
-    requests: number;
-    tokens: number;
-  }>;
-}
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ApiKeyManager } from '@/components/ApiKeyManager';
+import { ApiKeyGenerator } from '@/components/ApiKeyGenerator';
+import { 
+  Brain, 
+  TrendingUp, 
+  Users, 
+  Zap, 
+  Home, 
+  Settings, 
+  BarChart3, 
+  Key, 
+  MessageSquare, 
+  FileText, 
+  Activity,
+  Code2,
+  Globe,
+  Shield,
+  Rocket,
+  Clock,
+  Star,
+  Plus,
+  ArrowRight,
+  Bot,
+  Sparkles,
+  Layers,
+  Database,
+  Monitor,
+  Headphones
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, apiKey, logout } = useAuth();
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (!apiKey) {
-      navigate('/console');
-      return;
+  const { user, logout } = useAuth();
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+
+  const quickActions = [
+    {
+      title: 'Start Chatting',
+      description: 'Open Nexariq Console',
+      icon: MessageSquare,
+      action: () => navigate('/console'),
+      color: 'bg-blue-500',
+      featured: true
+    },
+    {
+      title: 'Generate API Key',
+      description: 'Create new API key',
+      icon: Key,
+      action: () => setIsApiKeyModalOpen(true),
+      color: 'bg-purple-500'
+    },
+    {
+      title: 'View Documentation',
+      description: 'API reference & guides',
+      icon: FileText,
+      action: () => navigate('/docs'),
+      color: 'bg-green-500'
+    },
+    {
+      title: 'Monitor Usage',
+      description: 'Analytics dashboard',
+      icon: BarChart3,
+      action: () => {},
+      color: 'bg-orange-500'
     }
-    
-    fetchAnalytics();
-  }, [apiKey]);
+  ];
 
-  const fetchAnalytics = async () => {
-    try {
-      const apiClient = new ApiClient(apiKey);
-      const data = await apiClient.getAnalytics();
-      setAnalytics(data);
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-      toast({
-        title: 'Analytics Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+  const features = [
+    {
+      title: 'Grok-Level Intelligence',
+      description: 'Experience AI that thinks and responds like xAI\'s Grok',
+      icon: Brain,
+      status: 'Available',
+      statusColor: 'bg-green-500'
+    },
+    {
+      title: 'Lightning Fast API',
+      description: 'Powered by Groq\'s ultra-fast inference infrastructure',
+      icon: Zap,
+      status: 'Active',
+      statusColor: 'bg-blue-500'
+    },
+    {
+      title: 'Real-time Chat',
+      description: 'Interactive conversations with streaming responses',
+      icon: MessageSquare,
+      status: 'Live',
+      statusColor: 'bg-purple-500'
+    },
+    {
+      title: 'Advanced Analytics',
+      description: 'Detailed usage metrics and performance insights',
+      icon: BarChart3,
+      status: 'Beta',
+      statusColor: 'bg-yellow-500'
+    },
+    {
+      title: 'Enterprise Security',
+      description: 'Bank-grade security with comprehensive monitoring',
+      icon: Shield,
+      status: 'Active',
+      statusColor: 'bg-green-500'
+    },
+    {
+      title: 'Global Infrastructure',
+      description: 'Worldwide edge deployment for minimal latency',
+      icon: Globe,
+      status: 'Available',
+      statusColor: 'bg-blue-500'
     }
-  };
+  ];
 
-  const copyApiKey = async () => {
-    if (!apiKey) return;
-    await navigator.clipboard.writeText(apiKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast({
-      title: 'Copied!',
-      description: 'API key copied to clipboard',
-    });
-  };
-
-  if (!user || !apiKey) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Brain className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Please connect your API key</h2>
-          <Button onClick={() => navigate('/console')}>Go to Console</Button>
-        </div>
-      </div>
-    );
-  }
+  const stats = [
+    { label: 'Total Requests', value: '2.4M+', icon: Activity, change: '+12%' },
+    { label: 'Active Users', value: '15.2K', icon: Users, change: '+8%' },
+    { label: 'Uptime', value: '99.9%', icon: Clock, change: '0%' },
+    { label: 'Avg Response', value: '145ms', icon: Zap, change: '-5%' }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,44 +131,26 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold grok-text-gradient">Nexariq AI Dashboard</h1>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    <Activity className="w-3 h-3 mr-1" />
-                    Live Analytics
-                  </Badge>
-                </div>
+                <h1 className="text-xl font-bold grok-text-gradient">Nexariq Platform</h1>
+                <p className="text-sm text-muted-foreground">Complete AI Platform for Developers</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/')}
-                className="grok-border"
-              >
+            
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="grok-border">
+                <Bot className="w-3 h-3 mr-1" />
+                Groq Powered
+              </Badge>
+              <Button variant="outline" size="sm" onClick={() => navigate('/')} className="grok-border">
                 <Home className="w-4 h-4 mr-2" />
                 Home
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/console')}
-                className="grok-border"
-              >
-                Console
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={logout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              <Button variant="ghost" size="sm" onClick={logout}>
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -128,208 +158,241 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="grok-border bg-card/50 backdrop-blur-sm grok-hover">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Total Requests
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold grok-text-gradient">
-                {isLoading ? '...' : analytics?.total_requests?.toLocaleString() || '0'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                +12% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="grok-border bg-card/50 backdrop-blur-sm grok-hover">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                Tokens Processed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold grok-text-gradient">
-                {isLoading ? '...' : analytics?.total_tokens?.toLocaleString() || '0'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Last 30 days
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="grok-border bg-card/50 backdrop-blur-sm grok-hover">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Avg Response Time
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold grok-text-gradient">
-                {isLoading ? '...' : `${Math.round(analytics?.avg_response_time || 0)}ms`}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                -5ms improvement
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="grok-border bg-card/50 backdrop-blur-sm grok-hover">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Error Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold grok-text-gradient">
-                {isLoading ? '...' : `${((analytics?.error_rate || 0) * 100).toFixed(2)}%`}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Within SLA targets
-              </p>
-            </CardContent>
-          </Card>
+        {/* Welcome Section */}
+        <div className="mb-8 aurora-bg rounded-2xl p-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Welcome to <span className="grok-text-gradient">Nexariq AI Platform</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            Your comprehensive platform for Grok-level AI intelligence. Generate API keys, 
+            monitor usage, and integrate advanced AI into your applications.
+          </p>
+          
+          {/* Quick Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+              return (
+                <Card 
+                  key={index}
+                  className={`grok-border bg-card/50 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:scale-105 ${
+                    action.featured ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={action.action}
+                >
+                  <CardContent className="p-6 text-center">
+                    <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{action.title}</h3>
+                    <p className="text-sm text-muted-foreground">{action.description}</p>
+                    {action.featured && (
+                      <Badge className="mt-3 bg-primary/20 text-primary border-primary/30">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Popular
+                      </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* Platform Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="grok-border bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-2xl font-bold grok-text-gradient">{stat.value}</p>
+                      <p className={`text-xs ${
+                        stat.change.startsWith('+') ? 'text-green-400' : 
+                        stat.change.startsWith('-') ? 'text-red-400' : 'text-muted-foreground'
+                      }`}>
+                        {stat.change} this month
+                      </p>
+                    </div>
+                    <Icon className="w-8 h-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Main Dashboard Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-secondary/50 grok-border">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Platform Features */}
             <Card className="grok-border bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-primary" />
-                  API Configuration
-                </CardTitle>
+                <CardTitle>Platform Features</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-secondary/50 border grok-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Your API Key</span>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={copyApiKey}
-                      className="h-8 px-3"
-                    >
-                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      {copied ? 'Copied' : 'Copy'}
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {features.map((feature, index) => {
+                    const Icon = feature.icon;
+                    return (
+                      <div key={index} className="p-4 border grok-border rounded-lg bg-secondary/30">
+                        <div className="flex items-start gap-3">
+                          <Icon className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-medium">{feature.title}</h4>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${feature.statusColor} text-white border-0 text-xs`}
+                              >
+                                {feature.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{feature.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="grok-border bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle>Getting Started</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">1</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Generate API Key</p>
+                      <p className="text-sm text-muted-foreground">Create your first API key to start building</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">2</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Try the Console</p>
+                      <p className="text-sm text-muted-foreground">Test Nexariq AI in our interactive chat interface</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">3</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Integrate API</p>
+                      <p className="text-sm text-muted-foreground">Use our documentation to integrate into your apps</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="grok-border bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle>Support & Resources</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start grok-border">
+                    <FileText className="w-4 h-4 mr-2" />
+                    API Documentation
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start grok-border">
+                    <Code2 className="w-4 h-4 mr-2" />
+                    Code Examples
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start grok-border">
+                    <Headphones className="w-4 h-4 mr-2" />
+                    Developer Support
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start grok-border">
+                    <Users className="w-4 h-4 mr-2" />
+                    Community Forum
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="api-keys">
+            <ApiKeyManager />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <Card className="grok-border bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Usage Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Analytics Dashboard</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Detailed usage metrics and performance insights coming soon
+                  </p>
+                  <Badge variant="outline">Coming Soon</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card className="grok-border bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Account Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium mb-2">Profile Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground">Email</label>
+                        <p className="text-sm font-medium">{user?.email || 'user@nexariq.com'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Plan</label>
+                        <p className="text-sm font-medium">Free Tier</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-border">
+                    <Button variant="outline" onClick={logout} className="grok-border">
+                      Sign Out
                     </Button>
                   </div>
-                  <div className="font-mono text-sm text-muted-foreground">
-                    {apiKey ? `${apiKey.substring(0, 12)}...${apiKey.substring(apiKey.length - 8)}` : 'Not connected'}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-secondary/50 border grok-border">
-                  <div className="text-sm font-medium mb-2">Endpoint</div>
-                  <div className="font-mono text-sm text-muted-foreground">
-                    https://lynxa-pro-backend.vercel.app/api/lynxa
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-secondary/50 border grok-border">
-                  <div className="text-sm font-medium mb-2">Model</div>
-                  <div className="font-mono text-sm text-muted-foreground">
-                    lynxa-pro (Grok-level Intelligence)
-                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="grok-border bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mt-2" />
-                    <div className="flex-1">
-                      <p className="text-sm">API connection established</p>
-                      <p className="text-xs text-muted-foreground">Just now</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                    <div className="flex-1">
-                      <p className="text-sm">Analytics data refreshed</p>
-                      <p className="text-xs text-muted-foreground">5 minutes ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
-                    <div className="flex-1">
-                      <p className="text-sm">Console session started</p>
-                      <p className="text-xs text-muted-foreground">1 hour ago</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="grok-border bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start grok-border"
-                  onClick={() => navigate('/console')}
-                >
-                  <Brain className="mr-2 h-4 w-4" />
-                  Open Console
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start grok-border"
-                  onClick={() => navigate('/docs')}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  View Documentation
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start grok-border"
-                  onClick={fetchAnalytics}
-                >
-                  <Activity className="mr-2 h-4 w-4" />
-                  Refresh Analytics
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="grok-border grok-gradient text-white">
-              <CardHeader>
-                <CardTitle className="text-white">Grok-level Intelligence</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-blue-100 mb-4">
-                  Experience the most advanced AI reasoning capabilities with real-time knowledge and deep understanding.
-                </p>
-                <Button 
-                  variant="secondary" 
-                  className="w-full"
-                  onClick={() => navigate('/console')}
-                >
-                  Try Now
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* API Key Generator Modal */}
+      <ApiKeyGenerator 
+        isOpen={isApiKeyModalOpen} 
+        onOpenChange={setIsApiKeyModalOpen} 
+      />
     </div>
   );
 };

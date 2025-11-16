@@ -1,9 +1,10 @@
-import React from 'react';
-import { Brain, Zap, Shield, TrendingUp, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Brain, Zap, Shield, TrendingUp, ArrowRight, Key, Play, Code2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ApiKeyGenerator } from '@/components/ApiKeyGenerator';
 
 const GrokLogo: React.FC = () => (
   <div className="flex items-center space-x-2">
@@ -67,7 +68,7 @@ const Navigation: React.FC = () => {
   );
 };
 
-const Hero: React.FC = () => {
+const Hero: React.FC<{ onOpenApiKeyModal: () => void }> = ({ onOpenApiKeyModal }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -95,18 +96,28 @@ const Hero: React.FC = () => {
             <Button 
               size="lg" 
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg grok-hover"
-              onClick={() => navigate(user ? '/console' : '/console')}
+              onClick={() => navigate('/console')}
             >
-              {user ? 'Open Console' : 'Start Building Now'}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <Play className="w-5 h-5 mr-2" />
+              Try Console
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="grok-border hover:bg-accent px-8 py-4 text-lg grok-hover"
+              onClick={onOpenApiKeyModal}
+            >
+              <Key className="w-5 h-5 mr-2" />
+              Generate API Key
+            </Button>
+            <Button 
+              size="lg" 
+              variant="ghost" 
+              className="hover:bg-accent px-8 py-4 text-lg grok-hover"
               onClick={() => navigate('/docs')}
             >
-              View Documentation
+              <Code2 className="w-5 h-5 mr-2" />
+              Documentation
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
@@ -257,13 +268,21 @@ const Footer: React.FC = () => {
 };
 
 const Index: React.FC = () => {
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  
   return (
     <div className="min-h-screen">
       <Navigation />
-      <Hero />
+      <Hero onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} />
       <Stats />
       <CTA />
       <Footer />
+      
+      {/* API Key Generator Modal */}
+      <ApiKeyGenerator 
+        isOpen={isApiKeyModalOpen} 
+        onOpenChange={setIsApiKeyModalOpen} 
+      />
     </div>
   );
 };
