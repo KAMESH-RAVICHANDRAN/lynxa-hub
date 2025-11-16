@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSafeUser } from '@/lib/stack-auth-config';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Card, 
@@ -43,11 +42,7 @@ interface ApiKey {
 }
 
 export function EnhancedApiKeyManager() {
-  const stackUser = useSafeUser();
-  const { user: legacyUser, isAuthenticated, apiKey } = useAuth();
-  
-  // Use either Stack Auth or legacy auth user
-  const user = stackUser || legacyUser;
+  const { user, isAuthenticated, apiKey } = useAuth();
   const currentApiKey = apiKey;
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
