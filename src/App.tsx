@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider as LegacyAuthProvider, useAuth } from "./contexts/AuthContext";
+import { GoogleAuthProvider } from "./contexts/GoogleAuthContext";
 import { LoginForm } from "./components/LoginForm";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -124,14 +125,16 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
 // Protected route wrapper with simple reliable auth
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Debug authentication state
   useEffect(() => {
     console.log('🔍 Auth Debug:', {
       isAuthenticated,
-      isLoading
+      isLoading,
+      authError
     });
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, authError]);
 
   // Prevent infinite loading
   useEffect(() => {
@@ -141,17 +144,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           console.warn('⚠️ Authentication timeout, showing login form');
           setAuthError('Authentication timeout');
         }
-      }, 5000); // 5 second timeout
+      }, 3000); // 3 second timeout
 
       return () => clearTimeout(timeout);
     }
   }, [isLoading, isAuthenticated]);
 
+  // Show loading screen briefly
   if (isLoading && !authError) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated || authError) {
+  // Show login if not authenticated
+  if (!isAuthenticated) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -225,11 +230,13 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <LegacyAuthProvider>
-            <AppRoutes />
-          </LegacyAuthProvider>
-        </BrowserRouter>
+        <GoogleAuthProvider>
+          <BrowserRouter>
+            <LegacyAuthProvider>
+              <AppRoutes />
+            </LegacyAuthProvider>
+          </BrowserRouter>
+        </GoogleAuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
