@@ -5,8 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider as LegacyAuthProvider, useAuth } from "./contexts/AuthContext";
-import { AuthProvider as StackAuthProvider } from "./lib/stack-auth-config";
-import { useStackApp, useUser } from "@stackframe/stack";
 import { LoginForm } from "./components/LoginForm";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -123,46 +121,18 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Protected route wrapper with Stack Auth integration
+// Protected route wrapper with legacy auth only
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
-  const [stackAuthError, setStackAuthError] = useState<boolean>(false);
-  const { isAuthenticated: legacyAuth, isLoading: legacyLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
-  
-  // Safely try to get Stack Auth user
-  useEffect(() => {
-    try {
-      const { useUser } = require('@stackframe/stack');
-      const stackUser = useUser();
-      setUser(stackUser);
-      console.log('✅ Stack Auth user loaded successfully');
-    } catch (error) {
-      console.warn('⚠️ Stack Auth not available, using legacy auth only:', error);
-      setStackAuthError(true);
-      setUser(null);
-    }
-  }, []);
   
   // Debug authentication state
   useEffect(() => {
-    console.log('🔍 Auth Debug:', {
-      stackUser: !!user,
-      legacyAuth,
-      legacyLoading,
-      stackAuthError,
-      userDetails: user ? { id: user?.id, email: user?.primaryEmail } : null
+    console.log('🔍 Auth Debug (Legacy Only):', {
+      isAuthenticated,
+      isLoading
     });
-  }, [user, legacyAuth, legacyLoading, stackAuthError]);
-
-  // For now, prioritize legacy auth to avoid Stack Auth issues
-  const isStackAuthenticated = !stackAuthError && !!user;
-  
-  // Combined loading state - use legacy loading primarily
-  const isLoading = legacyLoading;
-  
-  // Combined authentication state (legacy auth takes priority for stability)
-  const isAuthenticated = legacyAuth || isStackAuthenticated;
+  }, [isAuthenticated, isLoading]);
 
   // Prevent infinite loading
   useEffect(() => {
@@ -249,44 +219,19 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [useStackAuth, setUseStackAuth] = useState(true);
-
-  useEffect(() => {
-    // Test Stack Auth availability
-    const testStackAuth = () => {
-      try {
-        // Simple test to see if @stackframe/stack is working
-        require('@stackframe/stack');
-        console.log('✅ Stack Auth library available');
-      } catch (error) {
-        console.warn('⚠️ Stack Auth library not available, using legacy auth only');
-        setUseStackAuth(false);
-      }
-    };
-
-    testStackAuth();
-  }, []);
-
+  // Temporarily disable Stack Auth completely to fix black screen
+  console.log('🚀 Lynxa Hub starting with legacy auth only');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {useStackAuth ? (
-          <StackAuthProvider>
-            <BrowserRouter>
-              <LegacyAuthProvider>
-                <AppRoutes />
-              </LegacyAuthProvider>
-            </BrowserRouter>
-          </StackAuthProvider>
-        ) : (
-          <BrowserRouter>
-            <LegacyAuthProvider>
-              <AppRoutes />
-            </LegacyAuthProvider>
-          </BrowserRouter>
-        )}
+        <BrowserRouter>
+          <LegacyAuthProvider>
+            <AppRoutes />
+          </LegacyAuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
