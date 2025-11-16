@@ -125,23 +125,64 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
 
 // Protected route wrapper with Stack Auth integration
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = useUser();
+  const [user, setUser] = useState<any>(null);
+  const [stackAuthError, setStackAuthError] = useState<boolean>(false);
   const { isAuthenticated: legacyAuth, isLoading: legacyLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
   
-  // Check both Stack Auth and legacy auth for backward compatibility
-  const isStackAuthenticated = !!user;
+  // Safely try to get Stack Auth user
+  useEffect(() => {
+    try {
+      const { useUser } = require('@stackframe/stack');
+      const stackUser = useUser();
+      setUser(stackUser);
+      console.log('✅ Stack Auth user loaded successfully');
+    } catch (error) {
+      console.warn('⚠️ Stack Auth not available, using legacy auth only:', error);
+      setStackAuthError(true);
+      setUser(null);
+    }
+  }, []);
   
-  // Combined loading state - for now use legacy loading state
+  // Debug authentication state
+  useEffect(() => {
+    console.log('🔍 Auth Debug:', {
+      stackUser: !!user,
+      legacyAuth,
+      legacyLoading,
+      stackAuthError,
+      userDetails: user ? { id: user?.id, email: user?.primaryEmail } : null
+    });
+  }, [user, legacyAuth, legacyLoading, stackAuthError]);
+
+  // For now, prioritize legacy auth to avoid Stack Auth issues
+  const isStackAuthenticated = !stackAuthError && !!user;
+  
+  // Combined loading state - use legacy loading primarily
   const isLoading = legacyLoading;
   
-  // Combined authentication state (Stack Auth takes priority)
-  const isAuthenticated = isStackAuthenticated || legacyAuth;
+  // Combined authentication state (legacy auth takes priority for stability)
+  const isAuthenticated = legacyAuth || isStackAuthenticated;
 
-  if (isLoading) {
+  // Prevent infinite loading
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        if (isLoading && !isAuthenticated) {
+          console.warn('⚠️ Authentication timeout, showing login form');
+          setAuthError('Authentication timeout');
+        }
+      }, 5000); // 5 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, isAuthenticated]);
+
+  if (isLoading && !authError) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || authError) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -207,20 +248,48 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <StackAuthProvider>
-        <BrowserRouter>
-          <LegacyAuthProvider>
-            <AppRoutes />
-          </LegacyAuthProvider>
-        </BrowserRouter>
-      </StackAuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [useStackAuth, setUseStackAuth] = useState(true);
+
+  useEffect(() => {
+    // Test Stack Auth availability
+    const testStackAuth = () => {
+      try {
+        // Simple test to see if @stackframe/stack is working
+        require('@stackframe/stack');
+        console.log('✅ Stack Auth library available');
+      } catch (error) {
+        console.warn('⚠️ Stack Auth library not available, using legacy auth only');
+        setUseStackAuth(false);
+      }
+    };
+
+    testStackAuth();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {useStackAuth ? (
+          <StackAuthProvider>
+            <BrowserRouter>
+              <LegacyAuthProvider>
+                <AppRoutes />
+              </LegacyAuthProvider>
+            </BrowserRouter>
+          </StackAuthProvider>
+        ) : (
+          <BrowserRouter>
+            <LegacyAuthProvider>
+              <AppRoutes />
+            </LegacyAuthProvider>
+          </BrowserRouter>
+        )}
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
