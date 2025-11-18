@@ -22,7 +22,8 @@ const GoogleAuthContext = createContext<GoogleAuthContextType | undefined>(undef
 // Google OAuth Client ID - you'll need to get this from Google Cloud Console
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
 
-export const GoogleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Inner provider that uses Google OAuth hooks
+const GoogleAuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -89,10 +90,19 @@ export const GoogleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   return (
+    <GoogleAuthContext.Provider value={value}>
+      {children}
+    </GoogleAuthContext.Provider>
+  );
+};
+
+// Outer provider that wraps with GoogleOAuthProvider
+export const GoogleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <GoogleAuthContext.Provider value={value}>
+      <GoogleAuthProviderInner>
         {children}
-      </GoogleAuthContext.Provider>
+      </GoogleAuthProviderInner>
     </GoogleOAuthProvider>
   );
 };
